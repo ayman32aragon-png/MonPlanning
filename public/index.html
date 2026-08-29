@@ -1,168 +1,280 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Mon Planning</title>
-  <style>
-    body { font-family: system-ui, sans-serif; background: #eaedf1; margin: 0; padding: 15px; }
-    .container { max-width: 600px; margin: 0 auto; }
-    .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-    h1 { text-align: center; color: #2c3e50; margin-top: 0; font-size: 20px; }
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; }
-    .day-name { font-size: 12px; color: #7f8c8d; font-weight: bold; padding-bottom: 4px; }
-    .day-num { aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 8px; font-weight: bold; background: #f8f9fa; color: #333; font-size: 14px; cursor: pointer; position: relative; }
-    .day-num:active { transform: scale(0.95); }
-    .other-month { opacity: 0.3; cursor: default; }
-    .modified { border: 2px solid #e67e22; box-sizing: border-box; }
-    .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; margin-top: 10px; }
-    .legend-item { display: flex; align-items: center; gap: 8px; }
-    .color-box { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
-    
-    /* Fenêtre Modale */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .modal-content { background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 320px; display: grid; gap: 12px; }
-    .modal-content h3 { margin: 0 0 5px 0; color: #2c3e50; font-size: 18px; }
-    select, button { padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; width: 100%; box-sizing: border-box; }
-    .btn-save { background: #3498db; color: white; border: none; font-weight: bold; cursor: pointer; }
-    .btn-close { background: #95a5a6; color: white; border: none; font-weight: bold; cursor: pointer; }
-    .checkbox-container { display: flex; align-items: center; gap: 8px; font-size: 14px; }
-    .checkbox-container input { width: auto; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mon Planning</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f7f8fa;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: #333;
+        }
+        .card {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            margin-bottom: 20px;
+        }
+        .calendar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .calendar-header button {
+            background: none;
+            border: none;
+            font-size: 20px;
+            color: #f59e0b;
+            cursor: pointer;
+            padding: 5px 10px;
+        }
+        .calendar-header h2 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .weekdays {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            text-align: center;
+            font-size: 13px;
+            color: #8e8e93;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        .days-grid {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 6px;
+        }
+        .day {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            background-color: #f1f2f6;
+            color: #333;
+        }
+        .day.other-month {
+            color: #c7c7cc;
+            background-color: transparent;
+        }
+        /* Couleurs du planning */
+        .shift-7-14 { background-color: #9333ea !important; color: white !important; }
+        .shift-8-15 { background-color: #a5f3fc !important; color: #1e293b !important; }
+        .shift-9-16 { background-color: #fde68a !important; color: #1e293b !important; }
+        .shift-13-21 { background-color: #fbcfe8 !important; color: #1e293b !important; }
+        .shift-repos { background-color: #86efac !important; color: #1e293b !important; }
+        .shift-vacances { background-color: #e879f9 !important; color: white !important; }
+
+        .legend-toggle-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+            font-weight: 500;
+        }
+        /* Style du Switch */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 46px;
+            height: 24px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc;
+            transition: .3s;
+            border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: "";
+            height: 18px; width: 18px;
+            left: 3px; bottom: 3px;
+            background-color: white;
+            transition: .3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #3b82f6; }
+        input:checked + .slider:before { transform: translateX(22px); }
+
+        .legend-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 12px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        .hidden { display: none !important; }
+    </style>
 </head>
 <body>
-  <div class="container">
+
+    <!-- Calendrier -->
     <div class="card">
-      <h1>Août 2026</h1>
-      <div class="calendar-grid" id="grid"></div>
+        <div class="calendar-header">
+            <button onclick="changeMonth(-1)">&#10094;</button>
+            <h2 id="month-year-display">August 2026</h2>
+            <button onclick="changeMonth(1)">&#10095;</button>
+        </div>
+        <div class="weekdays">
+            <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+        </div>
+        <div class="days-grid" id="days-container"></div>
     </div>
 
+    <!-- Légende avec Switch -->
     <div class="card">
-      <strong>Légende</strong>
-      <div class="legend-grid">
-        <div class="legend-item"><div class="color-box" style="background:#3498db"></div>7h00 - 13h30</div>
-        <div class="legend-item"><div class="color-box" style="background:#2ecc71"></div>8h00 - 15h30</div>
-        <div class="legend-item"><div class="color-box" style="background:#1abc9c"></div>9h00 - 16h30</div>
-        <div class="legend-item"><div class="color-box" style="background:#9b59b6"></div>13h30 - 21h00</div>
-        <div class="legend-item"><div class="color-box" style="background:#2c3e50"></div>20h45 - 7h15</div>
-        <div class="legend-item"><div class="color-box" style="background:#95a5a6"></div>Repos</div>
-        <div class="legend-item"><div class="color-box" style="background:#f1c40f"></div>Vacances</div>
-      </div>
+        <div class="legend-toggle-container">
+            <span>Affichage permanent de la légende</span>
+            <label class="switch">
+                <input type="checkbox" id="legendToggle" checked onchange="toggleLegend()">
+                <span class="slider"></span>
+            </label>
+        </div>
+        <div class="legend-box" id="legendBox">
+            <div class="legend-item"><div class="legend-color" style="background:#9333ea;"></div>7h00 - 14h30</div>
+            <div class="legend-item"><div class="legend-color" style="background:#a5f3fc;"></div>8h00 - 15h30</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fde68a;"></div>9h00 - 16h30</div>
+            <div class="legend-item"><div class="legend-color" style="background:#fbcfe8;"></div>13h30 - 21h00</div>
+            <div class="legend-item"><div class="legend-color" style="background:#86efac;"></div>Repos</div>
+            <div class="legend-item"><div class="legend-color" style="background:#e879f9;"></div>Vacances</div>
+        </div>
     </div>
-  </div>
 
-  <!-- Modale de sélection -->
-  <div class="modal" id="modal">
-    <div class="modal-content">
-      <h3 id="modalDateTitle">Modifier le jour</h3>
-      <select id="modalShiftType">
-        <option value="7h00-13h30">7h00 - 13h30</option>
-        <option value="8h00-15h30">8h00 - 15h30</option>
-        <option value="9h00-16h30">9h00 - 16h30</option>
-        <option value="13h30-21h00">13h30 - 21h00</option>
-        <option value="20h45-7h15">20h45 - 7h15</option>
-        <option value="Repos">Repos</option>
-        <option value="Vacances">Vacances</option>
-      </select>
-      <div class="checkbox-container">
-        <input type="checkbox" id="modalIsModified">
-        <label for="modalIsModified">Modifié (Contour Orange)</label>
-      </div>
-      <button class="btn-save" id="btnSave">Enregistrer</button>
-      <button class="btn-close" id="btnClose">Annuler</button>
-    </div>
-  </div>
+    <script>
+        let currentDate = new Date(2026, 7, 1); // Août 2026 par défaut
 
-  <script>
-    const grid = document.getElementById('grid');
-    const modal = document.getElementById('modal');
-    const modalDateTitle = document.getElementById('modalDateTitle');
-    const modalShiftType = document.getElementById('modalShiftType');
-    const modalIsModified = document.getElementById('modalIsModified');
-    const btnSave = document.getElementById('btnSave');
-    const btnClose = document.getElementById('btnClose');
+        // Simulation d'un planning type (tu pourras l'adapter ou le lier à une logique de cycle)
+        // Les clés sont au format "YYYY-MM-DD"
+        const sampleSchedule = {
+            "2026-08-01": "shift-repos",
+            "2026-08-02": "shift-13-21",
+            "2026-08-03": "shift-9-16",
+            "2026-08-04": "shift-7-14",
+            "2026-08-05": "shift-repos",
+            "2026-08-06": "shift-8-15",
+            "2026-08-07": "shift-13-21",
+            "2026-08-08": "shift-repos",
+            "2026-08-09": "shift-7-14",
+            "2026-08-10": "shift-13-21",
+            "2026-08-11": "shift-9-16",
+            "2026-08-12": "shift-13-21",
+            "2026-08-13": "shift-7-14",
+            "2026-08-14": "shift-7-14",
+            "2026-08-15": "shift-9-16",
+            "2026-08-16": "shift-13-21",
+            "2026-08-17": "shift-7-14",
+            "2026-08-18": "shift-7-14",
+            "2026-08-19": "shift-7-14",
+            "2026-08-20": "shift-13-21",
+            "2026-08-21": "shift-9-16",
+            "2026-08-22": "shift-13-21",
+            "2026-08-23": "shift-13-21",
+            "2026-08-24": "shift-7-14",
+            "2026-08-25": "shift-9-16",
+            "2026-08-26": "shift-9-16",
+            "2026-08-27": "shift-7-14",
+            "2026-08-28": "shift-13-21",
+            "2026-08-29": "shift-13-21",
+            "2026-08-30": "shift-8-15",
+            "2026-08-31": "shift-repos"
+        };
 
-    const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-    const colorMap = {
-      "7h00-13h30": "#3498db",
-      "8h00-15h30": "#2ecc71",
-      "9h00-16h30": "#1abc9c",
-      "13h30-21h00": "#9b59b6",
-      "20h45-7h15": "#2c3e50",
-      "Repos": "#95a5a6",
-      "Vacances": "#f1c40f"
-    };
+        function renderCalendar() {
+            const year = currentDate.getFullYear();
+            const month = currentDate.getMonth();
 
-    let selectedDateStr = '';
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById("month-year-display").innerText = `${monthNames[month]} ${year}`;
 
-    async function load() {
-      grid.innerHTML = '';
-      days.forEach(d => grid.innerHTML += `<div class="day-name">${d}</div>`);
+            const firstDayIndex = (new Date(year, month, 1).getDay() + 6) % 7; // Lundi comme premier jour
+            const totalDays = new Date(year, month + 1, 0).getDate();
+            const prevTotalDays = new Date(year, month, 0).getDate();
 
-      // Décalage pour août 2026 (commence un samedi -> 5 jours vides)
-      for(let i=1; i<6; i++) {
-        grid.innerHTML += `<div class="day-num other-month">${26+i}</div>`;
-      }
+            const container = document.getElementById("days-container");
+            container.innerHTML = "";
 
-      // Jours du mois d'août
-      for(let i=1; i<=31; i++) {
-        const dStr = `2026-08-${String(i).padStart(2,'0')}`;
-        const cell = document.createElement('div');
-        cell.className = 'day-num';
-        cell.id = `d-${dStr}`;
-        cell.innerHTML = `<span>${i}</span>`;
-        
-        // Clic sur un jour pour ouvrir la modale
-        cell.addEventListener('click', () => {
-          selectedDateStr = dStr;
-          modalDateTitle.innerText = `Le ${i} Août 2026`;
-          modal.style.display = 'flex';
-        });
-
-        grid.appendChild(cell);
-      }
-
-      try {
-        const res = await fetch('/api/schedules');
-        const data = await res.json();
-        data.forEach(item => {
-          const el = document.getElementById(`d-${item.date}`);
-          if(el) {
-            el.style.backgroundColor = colorMap[item.shift_type] || '#bdc3c7';
-            if(item.shift_type === "20h45-7h15" || item.shift_type === "13h30-21h00") {
-              el.style.color = 'white';
+            // Jours du mois précédent
+            for (let i = firstDayIndex; i > 0; i--) {
+                const dayDiv = document.createElement("div");
+                dayDiv.className = "day other-month";
+                dayDiv.innerText = prevTotalDays - i + 1;
+                container.appendChild(dayDiv);
             }
-            if(item.is_modified) {
-              el.classList.add('modified');
+
+            // Jours du mois en cours
+            for (let i = 1; i <= totalDays; i++) {
+                const dayDiv = document.createElement("div");
+                dayDiv.className = "day";
+                dayDiv.innerText = i;
+
+                // Format de date YYYY-MM-DD pour vérifier s'il y a une couleur associée
+                const monthFormatted = String(month + 1).padStart(2, '0');
+                const dayFormatted = String(i).padStart(2, '0');
+                const dateKey = `${year}-${monthFormatted}-${dayFormatted}`;
+
+                if (sampleSchedule[dateKey]) {
+                    dayDiv.classList.add(sampleSchedule[dateKey]);
+                }
+
+                container.appendChild(dayDiv);
             }
-          }
-        });
-      } catch(err) {
-        console.log("Erreur chargement planning");
-      }
-    }
 
-    // Fermer la modale
-    btnClose.addEventListener('click', () => {
-      modal.style.display = 'none';
-    });
+            // Jours du mois suivant pour compléter la grille
+            const totalCellsDisplayed = firstDayIndex + totalDays;
+            const nextDaysCount = (totalCellsDisplayed % 7 === 0) ? 0 : 7 - (totalCellsDisplayed % 7);
+            for (let i = 1; i <= nextDaysCount; i++) {
+                const dayDiv = document.createElement("div");
+                dayDiv.className = "day other-month";
+                dayDiv.innerText = i;
+                container.appendChild(dayDiv);
+            }
+        }
 
-    // Enregistrer depuis la modale
-    btnSave.addEventListener('click', async () => {
-      await fetch('/api/schedules', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          date: selectedDateStr,
-          shiftType: modalShiftType.value,
-          isModified: modalIsModified.checked
-        })
-      });
-      modal.style.display = 'none';
-      load();
-    });
+        function changeMonth(direction) {
+            currentDate.setMonth(currentDate.getMonth() + direction);
+            renderCalendar();
+        }
 
-    load();
-  </script>
+        function toggleLegend() {
+            const box = document.getElementById("legendBox");
+            const toggle = document.getElementById("legendToggle");
+            if (toggle.checked) {
+                box.classList.remove("hidden");
+            } else {
+                box.classList.add("hidden");
+            }
+        }
+
+        // Lancement au démarrage
+        renderCalendar();
+    </script>
 </body>
 </html>
+
